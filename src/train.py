@@ -1,0 +1,127 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import os
+import sys
+from tqdm import tqdm  # 進度條顯示
+
+# 將目前檔案所在的上一層目錄 (專案根目錄) 加入 Python 搜尋路徑
+# 這樣 Python 才看得到外面的 config.py
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# 匯入我們寫好的模組
+import config
+from dataset import get_dataloaders
+from model import get_model
+
+def train_one_epoch(model, loader, criterion, optimizer, device):
+    model.train() # 設定為訓練模式
+    running_loss = 0.0
+    correct = 0
+    total = 0
+    
+    # tqdm 只是為了讓 Terminal 有漂亮的進度條
+    loop = tqdm(loader, desc="Training", leave=False)
+    
+    for images, labels in loop:
+        images, labels = images.to(device), labels.to(device)
+        
+        # 1. 清空梯度
+        optimizer.zero_grad()
+        
+        # 2. 前向傳播 (Forward)
+        outputs = model(images)
+        
+        # 3. 計算 Loss
+        loss = criterion(outputs, labels)
+        
+        # 4. 反向傳播 (Backward)
+        loss.backward()
+        
+        # 5. 更新參數
+        optimizer.step()
+        
+        # 統計數據
+        running_loss += loss.item()
+        _, predicted = outputs.max(1)
+        total += labels.size(0)
+        correct += predicted.eq(labels).sum().item()
+        
+        # 更新進度條資訊
+        loop.set_postfix(loss=loss.item())
+        
+    epoch_loss = running_loss / len(loader)
+    epoch_acc = 100. * correct / total
+    return epoch_loss, epoch_acc
+
+def validate(model, loader, criterion, device):
+    model.eval() # 設定為評估模式 (不更新參數、不Dropout)
+    running_loss = 0.0
+    correct = 0
+    total = 0
+    
+    with torch.no_grad(): # 驗證時不需要計算梯度，節省記憶體
+        for images, labels in loader:
+            images, labels = images.to(device), labels.to(device)
+            
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            
+            running_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+            
+    epoch_loss = running_loss / len(loader)
+    epoch_acc = 100. * correct / total
+    return epoch_loss, epoch_acc
+
+def main():
+    # 1. 準備資料
+    print("正在讀取資料...")
+    train_loader, val_loader, class_names = get_dataloaders(
+        config.DATA_DIR, 
+        batch_size=config.BATCH_SIZE,
+        val_split=config.VAL_SPLIT
+    )
+    
+    num_classes = len(class_names)
+    print(f"類別數量: {num_classes}")
+    
+    # 2. 準備模型
+    print("正在下載並建立模型...")
+    device = torch.device(config.DEVICE)
+    model = get_model(num_classes).to(device)
+    
+    # 3. 定義 Loss 和 Optimizer
+    criterion = nn.CrossEntropyLoss()
+    # 只更新 fc 層的參數，因為前面被凍結了
+    optimizer = optim.Adam(model.fc.parameters(), lr=config.LEARNING_RATE)
+    
+    # 4. 開始訓練
+    print(f"開始訓練，共 {config.NUM_EPOCHS} 個 Epochs，使用裝置: {config.DEVICE}")
+    best_acc = 0.0
+    
+    for epoch in range(config.NUM_EPOCHS):
+        # 訓練階段
+        train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
+        
+        # 驗證階段
+        val_loss, val_acc = validate(model, val_loader, criterion, device)
+        
+        print(f"Epoch [{epoch+1}/{config.NUM_EPOCHS}] "
+              f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
+              f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.2f}%")
+        
+        # 儲存最佳模型
+        if val_acc > best_acc:
+            best_acc = val_acc
+            if not os.path.exists(config.CHECKPOINT_DIR):
+                os.makedirs(config.CHECKPOINT_DIR)
+            torch.save(model.state_dict(), config.MODEL_SAVE_PATH)
+            print(f"🚀 發現最佳模型 (Acc: {best_acc:.2f}%)，已儲存至 {config.MODEL_SAVE_PATH}")
+            
+    print("訓練結束！")
+
+if __name__ == "__main__":
+    main()
