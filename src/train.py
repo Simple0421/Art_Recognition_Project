@@ -89,24 +89,20 @@ def main():
     print(f"類別數量: {num_classes}")
     
     # 2. 準備模型 (加入 tune_backend=True 開啟微調模式)
-    print("正在下載並建立模型 (微調模式)...")
+    print(f"正在建立模型: {config.MODEL_NAME} (微調模式)...")
     device = torch.device(config.DEVICE)
-    # 注意：這裡呼叫了更新後的 get_model
-    model = get_model(num_classes, tune_backend=True).to(device)
     
-    # 3. 定義 Loss 和 Optimizer (分層學習率)
-    # 修改 Loss Function：加入 Label Smoothing
-    # 這會讓模型不要那麼武斷，對抗過擬合
+    # 傳入模型名稱
+    model = get_model(num_classes, model_name=config.MODEL_NAME, tune_backend=True).to(device)
+    
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
     
-    # 這裡就是你問的關鍵修改：
-    # 骨幹 (layer3, layer4) 用很小的學習率 (1e-5)，避免破壞原本學好的特徵
-    # 分類頭 (fc) 用正常的學習率 (1e-3)，讓它快速學習新的畫家分類
-    optimizer = optim.Adam([
-        {'params': model.layer3.parameters(), 'lr': 1e-5}, # 恢復 Layer 3
-        {'params': model.layer4.parameters(), 'lr': 1e-5},
-        {'params': model.fc.parameters(), 'lr': 1e-3}
-    ], weight_decay=1e-4)
+    # --- 自動化 Optimizer 設定 ---
+    # 因為不同模型的層名稱不一樣 (layer3 vs features.7 vs denseblock4)
+    # 我們改用 "過濾法"：只要是 requires_grad=True 的參數，就丟進去練
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
+    
+    optimizer = optim.Adam(trainable_params, lr=config.LEARNING_RATE, weight_decay=1e-4)
     
     # (選用) 加入學習率排程器：讓 LR 隨著 Epoch 慢慢變小
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.NUM_EPOCHS)

@@ -17,16 +17,16 @@ def get_dataloaders(data_dir, batch_size=32, val_split=0.2, num_workers=2):
     # 1. 定義影像轉換 (Transforms)
     # src/dataset.py 修改 transform
     train_transforms = transforms.Compose([
-    transforms.Resize(256),
-    transforms.RandomCrop(224),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(20),  # 角度加大一點到 20
-    # 加強色彩變化，模擬不同燈光
-    transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1), 
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    # --- 新增這一行：隨機挖空 ---
-    transforms.RandomErasing(p=0.5, scale=(0.02, 0.2)) 
+        transforms.Resize(256),
+        transforms.RandomCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(20),  # 角度加大一點到 20
+        # 加強色彩變化，模擬不同燈光
+        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1), 
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        # --- 新增這一行：隨機挖空 ---
+        transforms.RandomErasing(p=0.5, scale=(0.02, 0.2)) 
     ])
 
     val_transforms = transforms.Compose([
