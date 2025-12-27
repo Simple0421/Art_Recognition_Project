@@ -1,67 +1,72 @@
 import os
 import torch
 from torchvision import datasets, transforms
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Subset
 
 def get_dataloaders(data_dir, batch_size=32, val_split=0.2, num_workers=2):
-    """
-    建立訓練與驗證的 DataLoaders
-    
-    Args:
-        data_dir (str): 圖片資料夾路徑 (例如: 'data/raw/images')
-        batch_size (int): 批次大小
-        val_split (float): 驗證集比例 (預設 0.2，即 20% 驗證，80% 訓練)
-        num_workers (int): 資料讀取執行緒數量 (Windows 建議設 0 或 2)
-    """
-    
-    # 1. 定義影像轉換 (Transforms)
-    # src/dataset.py 修改 transform
+    # 1. 定義影像轉換 (Transforms) - 維持不變
     train_transforms = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomCrop(224),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(20),  # 角度加大一點到 20
-        # 加強色彩變化，模擬不同燈光
+        transforms.RandomRotation(20),
         transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1), 
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        # --- 新增這一行：隨機挖空 ---
         transforms.RandomErasing(p=0.5, scale=(0.02, 0.2)) 
     ])
 
     val_transforms = transforms.Compose([
-        transforms.Resize(256),             # 先縮放
-        transforms.CenterCrop(224),         # 取中間最精華的部分
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    # 2. 讀取完整資料集
-    # 注意：這裡我們先用 train_transforms 讀取，切分後再手動覆寫驗證集的 transform
+    # 2. 為了取得類別名稱和長度，我們先讀一次 (用哪個 transform 沒差)
     try:
-        full_dataset = datasets.ImageFolder(root=data_dir, transform=train_transforms)
+        # 這裡建立一個基礎 dataset，用來計算長度跟產生索引
+        base_dataset = datasets.ImageFolder(root=data_dir, transform=None)
     except FileNotFoundError:
-        print(f"❌ 錯誤：找不到路徑 {data_dir}，請確認 Kaggle 資料是否已放入 data/raw/images")
+        print(f"❌ 錯誤：找不到路徑 {data_dir}")
         return None, None, None
 
-    class_names = full_dataset.classes
+    class_names = base_dataset.classes
     print(f"✅ 成功讀取資料集！共發現 {len(class_names)} 位畫家 (類別)。")
-    print(f"   總圖片數: {len(full_dataset)} 張")
-
-    # 3. 切分訓練集與驗證集
-    val_size = int(len(full_dataset) * val_split)
-    train_size = len(full_dataset) - val_size
     
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+    # 3. 計算切分大小
+    val_size = int(len(base_dataset) * val_split)
+    train_size = len(base_dataset) - val_size
+    
+    # 4. 產生固定的隨機索引 (關鍵步驟！)
+    generator = torch.Generator().manual_seed(42)
+    # 我們這裡只在乎 split 產生的 "indices"，不在乎 dataset 本身
+    train_subset_temp, val_subset_temp = random_split(
+        base_dataset, 
+        [train_size, val_size],
+        generator=generator
+    )
+    
+    # 取得切分後的索引清單
+    train_indices = train_subset_temp.indices
+    val_indices = val_subset_temp.indices
 
-    # 重要技巧：修正驗證集的 Transform (避免驗證時也被「資料增強」干擾)
-    # 這是 PyTorch subset 的一個小坑，標準解法是這樣：
-    val_dataset.dataset.transform = val_transforms 
+    # 5. 建立兩個獨立的 ImageFolder (重點在這裡！)
+    # 一個專門給訓練用 (套用 train_transforms)
+    train_dataset_full = datasets.ImageFolder(root=data_dir, transform=train_transforms)
+    # 一個專門給驗證用 (套用 val_transforms)
+    val_dataset_full = datasets.ImageFolder(root=data_dir, transform=val_transforms)
 
-    print(f"   訓練集數量: {len(train_dataset)} 張")
-    print(f"   驗證集數量: {len(val_dataset)} 張")
+    # 6. 使用剛剛固定的索引，分別從兩個 dataset 中取資料
+    # 這裡使用 Subset 來把索引套用到對應的 dataset 上
+    train_dataset = Subset(train_dataset_full, train_indices)
+    val_dataset = Subset(val_dataset_full, val_indices)
 
-    # 4. 建立 DataLoader
+    print(f"   總圖片數: {len(base_dataset)} 張")
+    print(f"   訓練集數量: {len(train_dataset)} 張 (已套用資料增強)")
+    print(f"   驗證集數量: {len(val_dataset)} 張 (無資料增強)")
+
+    # 7. 建立 DataLoader
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 

@@ -60,8 +60,8 @@ def main():
     # 格式: (模型名稱, 權重路徑)
     model_configs = [
         ('resnet50', './checkpoints/resnet50_best.pth'),
-        #('densenet121', './checkpoints/densenet121_best.pth'),
-        #('efficientnet_b0', './checkpoints/efficientnet_b0_best.pth'), 
+        ('densenet121', './checkpoints/densenet121_best.pth'),
+        ('efficientnet_b0', './checkpoints/efficientnet_b0_best.pth'), 
     ]
     
     # 3. 載入所有模型
