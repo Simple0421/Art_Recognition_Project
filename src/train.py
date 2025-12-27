@@ -95,12 +95,15 @@ def main():
     model = get_model(num_classes, tune_backend=True).to(device)
     
     # 3. 定義 Loss 和 Optimizer (分層學習率)
-    criterion = nn.CrossEntropyLoss()
+    # 修改 Loss Function：加入 Label Smoothing
+    # 這會讓模型不要那麼武斷，對抗過擬合
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
     
     # 這裡就是你問的關鍵修改：
     # 骨幹 (layer3, layer4) 用很小的學習率 (1e-5)，避免破壞原本學好的特徵
     # 分類頭 (fc) 用正常的學習率 (1e-3)，讓它快速學習新的畫家分類
     optimizer = optim.Adam([
+        {'params': model.layer3.parameters(), 'lr': 1e-5}, # 恢復 Layer 3
         {'params': model.layer4.parameters(), 'lr': 1e-5},
         {'params': model.fc.parameters(), 'lr': 1e-3}
     ], weight_decay=1e-4)

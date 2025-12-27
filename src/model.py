@@ -7,8 +7,8 @@ def get_model(num_classes, tune_backend=True):
     
     if tune_backend:
         for name, child in model.named_children():
-            # 改動：只解凍 layer4 和 fc，把 layer3 拿掉
-            if name in ['layer4', 'fc']: 
+            # 改回：解凍 layer3, layer4 和 fc
+            if name in ['layer3', 'layer4', 'fc']:
                 for param in child.parameters():
                     param.requires_grad = True
             else:
