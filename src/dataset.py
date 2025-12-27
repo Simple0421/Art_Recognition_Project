@@ -15,23 +15,22 @@ def get_dataloaders(data_dir, batch_size=32, val_split=0.2, num_workers=2):
     """
     
     # 1. 定義影像轉換 (Transforms)
-    # 對應提案書 4.1：統一規格、標準化、資料增強
+    # src/dataset.py 修改 transform
     train_transforms = transforms.Compose([
-        transforms.Resize((224, 224)),        # 統一尺寸 
-        transforms.RandomHorizontalFlip(),    # 隨機水平翻轉 
-        transforms.RandomRotation(10),        # 隨機旋轉 (-10度 ~ +10度) 
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2), # 色彩抖動 
-        transforms.ToTensor(),                # 轉為 Tensor
-        transforms.Normalize([0.485, 0.456, 0.406], # ImageNet 標準化參數 [cite: 20]
-                             [0.229, 0.224, 0.225])
+        transforms.Resize(256),             # 先縮放到短邊為 256 (保持比例)
+        transforms.RandomCrop(224),         # 隨機裁切 224x224 (增加變化性)
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(15),      # 增加旋轉角度
+        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3), # 加強色彩擾動
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    # 驗證集不需要資料增強，只需要 Resize 和 Normalize
     val_transforms = transforms.Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize(256),             # 先縮放
+        transforms.CenterCrop(224),         # 取中間最精華的部分
         transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], 
-                             [0.229, 0.224, 0.225])
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
     # 2. 讀取完整資料集

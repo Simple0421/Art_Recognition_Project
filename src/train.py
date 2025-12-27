@@ -88,18 +88,29 @@ def main():
     num_classes = len(class_names)
     print(f"類別數量: {num_classes}")
     
-    # 2. 準備模型
-    print("正在下載並建立模型...")
+    # 2. 準備模型 (加入 tune_backend=True 開啟微調模式)
+    print("正在下載並建立模型 (微調模式)...")
     device = torch.device(config.DEVICE)
-    model = get_model(num_classes).to(device)
+    # 注意：這裡呼叫了更新後的 get_model
+    model = get_model(num_classes, tune_backend=True).to(device)
     
-    # 3. 定義 Loss 和 Optimizer
+    # 3. 定義 Loss 和 Optimizer (分層學習率)
     criterion = nn.CrossEntropyLoss()
-    # 只更新 fc 層的參數，因為前面被凍結了
-    optimizer = optim.Adam(model.fc.parameters(), lr=config.LEARNING_RATE)
     
+    # 這裡就是你問的關鍵修改：
+    # 骨幹 (layer3, layer4) 用很小的學習率 (1e-5)，避免破壞原本學好的特徵
+    # 分類頭 (fc) 用正常的學習率 (1e-3)，讓它快速學習新的畫家分類
+    optimizer = optim.Adam([
+        {'params': model.layer3.parameters(), 'lr': 1e-5},
+        {'params': model.layer4.parameters(), 'lr': 1e-5},
+        {'params': model.fc.parameters(), 'lr': 1e-3}
+    ])
+    
+    # (選用) 加入學習率排程器：讓 LR 隨著 Epoch 慢慢變小
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.NUM_EPOCHS)
+
     # 4. 開始訓練
-    print(f"開始訓練，共 {config.NUM_EPOCHS} 個 Epochs，使用裝置: {config.DEVICE}")
+    print(f"開始訓練，共 {config.NUM_EPOCHS} 個 Epochs...")
     best_acc = 0.0
     
     for epoch in range(config.NUM_EPOCHS):
@@ -108,6 +119,8 @@ def main():
         
         # 驗證階段
         val_loss, val_acc = validate(model, val_loader, criterion, device)
+        
+        scheduler.step() # <--- 每個 Epoch 結束後更新學習率
         
         print(f"Epoch [{epoch+1}/{config.NUM_EPOCHS}] "
               f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | "
