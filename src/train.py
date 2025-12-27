@@ -101,10 +101,9 @@ def main():
     # 骨幹 (layer3, layer4) 用很小的學習率 (1e-5)，避免破壞原本學好的特徵
     # 分類頭 (fc) 用正常的學習率 (1e-3)，讓它快速學習新的畫家分類
     optimizer = optim.Adam([
-        {'params': model.layer3.parameters(), 'lr': 1e-5},
         {'params': model.layer4.parameters(), 'lr': 1e-5},
         {'params': model.fc.parameters(), 'lr': 1e-3}
-    ])
+    ], weight_decay=1e-4)
     
     # (選用) 加入學習率排程器：讓 LR 隨著 Epoch 慢慢變小
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.NUM_EPOCHS)
