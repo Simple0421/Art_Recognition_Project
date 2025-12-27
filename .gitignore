@@ -1,0 +1,20 @@
+# 忽略虛擬環境
+venv/
+.env
+
+# 忽略 Python 快取
+__pycache__/
+*.py[cod]
+
+# 忽略大型數據集 (非常重要！)
+data/
+data/raw/
+data/processed/
+
+# 忽略訓練好的模型權重 (通常很大，不建議放 GitHub)
+checkpoints/
+*.pth
+*.h5
+
+# 忽略 VS Code 設定檔
+.vscode/
