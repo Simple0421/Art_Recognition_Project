@@ -19,7 +19,6 @@
 
 ## 📂 檔案結構 (Project Structure)
 
-```text
 ART_RECOGNITION_PROJECT/
 ├── checkpoints/           # 存放訓練好的模型權重 (.pth 檔案)
 ├── data/
@@ -44,7 +43,6 @@ ART_RECOGNITION_PROJECT/
 ├── confusion_matrix.png   # 模型評估產生的混淆矩陣圖
 └── README.md              # 專案說明文件
 
-```
 
 ## 🚀 快速開始 (Quick Start)
 
