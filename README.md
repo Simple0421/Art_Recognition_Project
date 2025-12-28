@@ -1,13 +1,12 @@
-```markdown
 # 🎨 Art Recognition & Retrieval System (名畫辨識與以圖搜圖系統)
 
 這是一個基於深度學習的藝術畫作分析系統。本專案包含兩個核心目標：
-1.  **核心目標 (Classification)**：辨識畫作是由哪位畫家所繪 (支援 49 位知名畫家)。
-2.  **進階目標 (Retrieval)**：實作「以圖搜圖」功能，找出風格與構圖相似的畫作。
+1. **核心目標 (Classification)**：辨識畫作是由哪位畫家所繪 (支援 49 位知名畫家)。
+2. **進階目標 (Retrieval)**：實作「以圖搜圖」功能，找出風格與構圖相似的畫作。
 
 ## 📺 專案展示 (Demo)
 
-> **[ YouTube 示範影片連結](https://drive.google.com/drive/folders/1fNgNYoRSda9xw5EQh9m5nt3uM_xTDDzo?usp=sharing)**
+> 🎥 **[專案示範影片連結 (Google Drive)](https://drive.google.com/drive/folders/1fNgNYoRSda9xw5EQh9m5nt3uM_xTDDzo?usp=sharing)**
 
 ## 🛠️ 技術架構 (Tech Stack)
 
@@ -19,6 +18,7 @@
 
 ## 📂 檔案結構 (Project Structure)
 
+```text
 ART_RECOGNITION_PROJECT/
 ├── checkpoints/           # 存放訓練好的模型權重 (.pth 檔案)
 ├── data/
@@ -43,6 +43,7 @@ ART_RECOGNITION_PROJECT/
 ├── confusion_matrix.png   # 模型評估產生的混淆矩陣圖
 └── README.md              # 專案說明文件
 
+```
 
 ## 🚀 快速開始 (Quick Start)
 
@@ -52,30 +53,31 @@ ART_RECOGNITION_PROJECT/
 
 ```bash
 pip install -r requirements.txt
-
 ```
 
 ### 2. 下載模型權重與資料庫 (重要！)
 
-由於模型權重檔 (`.pth`) 與特徵資料庫 (`.npy`) 檔案過大，無法上傳至 GitHub。請從以下連結下載，並放入專案目錄資料夾中：
+由於模型權重檔 (`.pth`) 與特徵資料庫 (`.npy`) 檔案過大，無法上傳至 GitHub。請從以下連結下載，並依照說明放入對應的專案目錄中：
 
-* 📥 **[點此前往 Google Drive 下載必要檔案](https://drive.google.com/drive/folders/1fNgNYoRSda9xw5EQh9m5nt3uM_xTDDzo?usp=sharing)**
-* `resnet50_best.pth` (訓練好的resnet50模型權重，放入checkpoints)
-* `efficientnet_b0_best.pth` (訓練好的efficientnet模型權重，放入checkpoints)
-* `densenet121_best.pth` (訓練好的densenet121模型權重，放入checkpoints)
-* `wikiart_features.npy` (80,000 張畫作的特徵向量，放入data\processed)
-* `wikiart_paths.npy` (對應的圖片路徑檔，data\processed)
-* `wikiart.zip` (80,000 張畫作的圖檔，解壓縮後裡面檔案全部放入data\wikiart)
+📥 **[點此前往 Google Drive 下載必要檔案](https://drive.google.com/drive/folders/1fNgNYoRSda9xw5EQh9m5nt3uM_xTDDzo?usp=sharing)**
 
+請將下載的檔案依照下列位置放置：
 
+| 檔案名稱 | 說明 | 存放目標資料夾 |
+| --- | --- | --- |
+| `resnet50_best.pth` | ResNet50 模型權重 | `checkpoints/` |
+| `efficientnet_b0_best.pth` | EfficientNet 模型權重 | `checkpoints/` |
+| `densenet121_best.pth` | DenseNet121 模型權重 | `checkpoints/` |
+| `wikiart_features.npy` | 80,000 張畫作特徵向量 | `data/processed/` |
+| `wikiart_paths.npy` | 圖片路徑索引檔 | `data/processed/` |
+| `wikiart.zip` | 畫作原始圖檔 (需解壓縮) | 解壓後將所有檔案放入 `data/wikiart/` |
 
 ### 3. 啟動系統
 
-下載完檔案後，執行以下指令啟動網頁介面：
+檔案準備完成後，執行以下指令啟動網頁介面：
 
 ```bash
 streamlit run app.py
-
 ```
 
 系統啟動後，瀏覽器將自動開啟，您即可上傳圖片進行測試。
@@ -92,8 +94,6 @@ streamlit run app.py
 2. **向量正規化**：對所有向量進行 L2 Normalization，將特徵映射至單位超球體表面。
 3. **高速搜尋**：使用 **FAISS** 建立內積索引 (Inner Product Index)，在毫秒級時間內完成 8 萬張圖片的相似度比對。
 
+---
 
 **Author**: [楊書桓] | **Student ID**: 01357142
-
-```
-
