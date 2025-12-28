@@ -1,0 +1,25 @@
+# --- 核心深度學習框架 ---
+# 注意：建議根據你的 CUDA 版本到 PyTorch 官網找對應指令，
+# 這裡列出的是通用版本。
+torch>=2.0.0
+torchvision>=0.15.0
+
+# --- 數值運算與資料處理 ---
+numpy>=1.21.0
+pandas
+
+# --- 影像處理 ---
+Pillow>=9.0.0
+matplotlib  # 畫 Loss 曲線用
+scikit-learn # 用於資料分割或評估指標
+
+# --- 進度條顯示 ---
+tqdm
+
+# --- 搜尋引擎核心 ---
+# 使用 CPU 版本以確保最大相容性 (Windows/Linux/Mac 皆可)
+faiss-cpu
+
+# --- 網頁介面展示 ---
+streamlit
+watchdog # Streamlit 依賴項，有助於效能
