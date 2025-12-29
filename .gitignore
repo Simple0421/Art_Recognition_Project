@@ -1,20 +1,28 @@
-# 忽略虛擬環境
+# --- 虛擬環境與系統檔 ---
 venv/
 .env
+.DS_Store  # Mac 系統產生的垃圾檔
+.vscode/   # VS Code 設定檔
 
-# 忽略 Python 快取
+# --- Python 快取 ---
 __pycache__/
 *.py[cod]
 
-# 忽略大型數據集 (非常重要！)
-data/raw/*
-data/processed/*
-data/wikiart/*
-
-# 忽略訓練好的模型權重 (通常很大，不建議放 GitHub)
+# --- 模型權重 (忽略大檔，但保留資料夾結構) ---
 checkpoints/*
+!checkpoints/.gitkeep
 *.pth
 *.h5
 
-# 忽略 VS Code 設定檔
-.vscode/
+# --- 資料集 (忽略大檔，但保留資料夾結構) ---
+# 1. 原始資料
+data/raw/*
+!data/raw/.gitkeep
+
+# 2. 處理後的特徵檔 (.npy)
+data/processed/*
+!data/processed/.gitkeep
+
+# 3. 解壓縮後的圖片資料夾
+data/wikiart/*
+!data/wikiart/.gitkeep
