@@ -71,7 +71,7 @@ pip install -r requirements.txt
 | `wikiart_features.npy` | 80,000 張畫作特徵向量 | `data/processed/` |
 | `wikiart_paths.npy` | 圖片路徑索引檔 | `data/processed/` |
 | `wikiart.zip` | 畫作原始圖檔 (需解壓縮) | 解壓後將所有檔案放入 `data/wikiart/` |
-| `images.zip` | 畫作原始圖檔 (需解壓縮) | 解壓後將所有檔案放入 `data/raw/` |
+| `images.zip` | 畫作原始圖檔 (需解壓縮) | 解壓後將所有檔案放入 `data/raw/images` |
 
 ### 3. 啟動系統
 
