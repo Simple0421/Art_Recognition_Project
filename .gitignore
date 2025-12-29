@@ -7,13 +7,12 @@ __pycache__/
 *.py[cod]
 
 # 忽略大型數據集 (非常重要！)
-data/
-data/raw/
-data/processed/
-data/wikiart/
+data/raw/*
+data/processed/*
+data/wikiart/*
 
 # 忽略訓練好的模型權重 (通常很大，不建議放 GitHub)
-checkpoints/
+checkpoints/*
 *.pth
 *.h5
 
